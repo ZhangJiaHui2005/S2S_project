@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  admin_id      Int       @id @default(autoincrement())
+  email         String    @unique
+  password_hash String
+  full_name     String
+  last_login_at DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime
+}
+
+model AdminNotification {
+  notification_id Int       @id @default(autoincrement())
+  type            String
+  title           String
+  message         String
+  user_id         Int?
+  created_at      DateTime  @default(now())
+  read_at         DateTime?
+}
+
+model BorrowRequest {
+  request_id  Int      @id @default(autoincrement())
+  borrower_id Int
+  item_id     Int
+  status      String   @default("PENDING")
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+  User        User     @relation(fields: [borrower_id], references: [user_id], onDelete: Cascade)
+  Item        Item     @relation(fields: [item_id], references: [item_id], onDelete: Cascade)
+
+  @@index([created_at])
+  @@index([status])
+}
+
+model Category {
+  category_id Int      @id @default(autoincrement())
+  name        String   @unique
+  icon        String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+  Item        Item[]
+}
+
+model EscrowLog {
+  escrow_id    Int         @id @default(autoincrement())
+  trans_id     Int
+  user_id      Int
+  locked_karma Int
+  status       String      @default("LOCKED")
+  created_at   DateTime    @default(now())
+  updated_at   DateTime
+  Transaction  Transaction @relation(fields: [trans_id], references: [trans_id])
+  User         User        @relation(fields: [user_id], references: [user_id])
+}
+
+model Insurance_Fund_Logs {
+  log_id       String   @id @db.Uuid
+  amount_karma Int
+  rate_pct     Decimal
+  created_at   DateTime @default(now())
+  trans_id     Int
+}
+
+model Item {
+  item_id       Int             @id @default(autoincrement())
+  owner_id      Int
+  category_id   Int
+  title         String
+  description   String?
+  karma_value   Int
+  type          String
+  status        String          @default("AVAILABLE")
+  location      String?
+  image_url     String?
+  created_at    DateTime        @default(now())
+  updated_at    DateTime
+  BorrowRequest BorrowRequest[]
+  Category      Category        @relation(fields: [category_id], references: [category_id])
+  User          User            @relation(fields: [owner_id], references: [user_id], onDelete: Cascade)
+  Transaction   Transaction[]
+
+  @@index([category_id])
+  @@index([created_at])
+  @@index([owner_id])
+  @@index([status])
+  @@index([type])
+}
+
+model Level {
+  level_id             Int      @id @default(autoincrement())
+  level_name           String
+  min_karma            Int
+  max_karma            Int
+  borrow_limit         Int
+  deposit_discount_pct Float
+  created_at           DateTime @default(now())
+  User                 User[]
+}
+
+model Memberships {
+  membership_id  String                  @id @db.Uuid
+  user_id        Int
+  payment_id     String?                 @unique @db.Uuid
+  plan_type      MembershipPlanType
+  payment_method MembershipPaymentMethod
+  karma_cost     Int?
+  price_vnd      Int?
+  start_at       DateTime
+  end_at         DateTime
+  status         MembershipStatus
+  created_at     DateTime                @default(now())
+  Payments       Payments?               @relation(fields: [payment_id], references: [payment_id])
+  User           User                    @relation(fields: [user_id], references: [user_id])
+}
+
+model Payments {
+  payment_id      String         @id @db.Uuid
+  user_id         Int
+  amount_vnd      Int
+  karma_received  Int            @default(0)
+  payment_gateway String
+  transaction_ref String         @unique
+  purpose         PaymentPurpose
+  status          PaymentStatus
+  created_at      DateTime       @default(now())
+  paid_at         DateTime?
+  archived_at     DateTime?
+  Memberships     Memberships?
+  User            User           @relation(fields: [user_id], references: [user_id])
+
+  @@index([archived_at])
+}
+
+model Transaction {
+  borrower_id                        Int
+  created_at                         DateTime    @default(now())
+  deposit_amount                     Int         @default(0)
+  due_date                           DateTime
+  item_id                            Int
+  karma_amount                       Int
+  lender_id                          Int
+  qr_code_hash                       String?
+  status                             String      @default("PENDING")
+  updated_at                         DateTime
+  trans_id                           Int         @id @default(autoincrement())
+  EscrowLog                          EscrowLog[]
+  User_Transaction_borrower_idToUser User        @relation("Transaction_borrower_idToUser", fields: [borrower_id], references: [user_id])
+  Item                               Item        @relation(fields: [item_id], references: [item_id])
+  User_Transaction_lender_idToUser   User        @relation("Transaction_lender_idToUser", fields: [lender_id], references: [user_id])
+
+  @@index([borrower_id])
+  @@index([item_id])
+  @@index([lender_id])
+  @@index([status])
+}
+
+model User {
+  user_id                                   Int             @id @default(autoincrement())
+  email                                     String          @unique
+  password_hash                             String?
+  google_id                                 String?         @unique
+  full_name                                 String
+  avatar                                    String?
+  karma_balance                             Int             @default(100)
+  level_id                                  Int             @default(1)
+  is_verified                               Boolean         @default(true)
+  status                                    String          @default("ACTIVE")
+  created_at                                DateTime        @default(now())
+  updated_at                                DateTime
+  last_active_at                            DateTime?
+  BorrowRequest                             BorrowRequest[]
+  EscrowLog                                 EscrowLog[]
+  Item                                      Item[]
+  Memberships                               Memberships[]
+  Payments                                  Payments[]
+  Transaction_Transaction_borrower_idToUser Transaction[]   @relation("Transaction_borrower_idToUser")
+  Transaction_Transaction_lender_idToUser   Transaction[]   @relation("Transaction_lender_idToUser")
+  Level                                     Level           @relation(fields: [level_id], references: [level_id])
+}
+
+enum MembershipPaymentMethod {
+  PAYOS
+  KARMA
+}
+
+enum MembershipPlanType {
+  KARMA_PASS
+}
+
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentPurpose {
+  KARMA_TOPUP
+  MEMBERSHIP
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
