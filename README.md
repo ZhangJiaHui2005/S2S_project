@@ -1,4 +1,4 @@
-# 🎓 Campus Exchange (S2S Project)
+# 🎓 S2S Project
 
 > **Nền tảng trao đổi vật phẩm học tập & sinh hoạt sinh viên thông minh, tích hợp hệ thống điểm thưởng Karma và xác thực giao dịch an toàn qua QR Escrow.**
 
@@ -6,7 +6,7 @@
 
 ## 📌 Giới thiệu dự án
 
-**Campus Exchange** là giải pháp số hóa việc chia sẻ, trao đổi tài liệu học tập, giáo trình, dụng cụ học tập và đồ dùng cá nhân trong khuôn viên trường đại học. Dự án giải quyết bài toán lãng phí tài nguyên, đồng thời xây dựng cộng đồng sinh viên tương trợ lẫn nhau thông qua cơ chế điểm tín nhiệm **Karma** và giao dịch an toàn tuyệt đối nhờ hệ thống giữ điểm tạm thời (**Escrow**) kết hợp quét mã **QR Code**.
+**S2S** là giải pháp số hóa việc chia sẻ, trao đổi tài liệu học tập, giáo trình, dụng cụ học tập và đồ dùng cá nhân trong khuôn viên trường đại học. Dự án giải quyết bài toán lãng phí tài nguyên, đồng thời xây dựng cộng đồng sinh viên tương trợ lẫn nhau thông qua cơ chế điểm tín nhiệm **Karma** và giao dịch an toàn tuyệt đối nhờ hệ thống giữ điểm tạm thời (**Escrow**) kết hợp quét mã **QR Code**.
 
 Dự án áp dụng mô hình phát triển **Fullstack theo tính năng (Vertical Slice Architecture)**: mỗi thành viên chịu trách nhiệm trọn vẹn một module từ Database, API Backend (NestJS) đến Giao diện Người dùng (Next.js & shadcn/ui).
 
@@ -333,7 +333,7 @@ npm run dev
 
 ```mermaid
 gantt
-    title Kế hoạch triển khai dự án Campus Exchange
+    title Kế hoạch triển khai dự án S2S
     dateFormat  YYYY-MM-DD
     section Tuần 1: Nền tảng
     Setup Framework & CI/CD          :done, w1_1, 2026-09-18, 7d
@@ -368,4 +368,4 @@ gantt
 ---
 
 ## 📄 Bản quyền & Đóng góp
-Dự án được xây dựng và duy trì bởi nhóm sinh viên dự án **Campus Exchange (S2S Project)**. Mọi đóng góp xin vui lòng gửi qua Pull Request theo đúng quy trình đã cam kết.
+Dự án được xây dựng và duy trì bởi nhóm sinh viên dự án **S2S**. Mọi đóng góp xin vui lòng gửi qua Pull Request theo đúng quy trình đã cam kết.
