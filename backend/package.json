@@ -22,7 +22,9 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
+    "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
+    "test:auth:integration": "node scripts/test-auth-integration.mjs",
+    "typecheck": "tsc --noEmit --declaration false"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "1.7.5",

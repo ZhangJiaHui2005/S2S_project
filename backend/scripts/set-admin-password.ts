@@ -17,6 +17,17 @@ async function main() {
     process.exit(1);
   }
 
+  if (
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+    email.length > 254 ||
+    password.length < 8 ||
+    Buffer.byteLength(password, 'utf8') > 72
+  ) {
+    throw new Error(
+      'Email không hợp lệ hoặc mật khẩu không đáp ứng tối thiểu 8 ký tự, tối đa 72 byte UTF-8.',
+    );
+  }
+
   console.log(`Setting password for admin: ${email}...`);
   const salt = await bcrypt.genSalt(10);
   const password_hash = await bcrypt.hash(password, salt);
@@ -30,10 +41,16 @@ async function main() {
       where: { email },
       data: {
         password_hash,
+        session_version: { increment: 1 },
         updated_at: new Date(),
       },
     });
-    console.log(`Successfully updated password for admin ID ${updated.admin_id} (${updated.email})`);
+    await prisma.adminSession.deleteMany({
+      where: { admin_id: updated.admin_id },
+    });
+    console.log(
+      `Successfully updated password for admin ID ${updated.admin_id} (${updated.email})`,
+    );
   } else {
     const created = await prisma.admin.create({
       data: {
@@ -43,7 +60,9 @@ async function main() {
         updated_at: new Date(),
       },
     });
-    console.log(`Successfully created new admin ID ${created.admin_id} (${created.email})`);
+    console.log(
+      `Successfully created new admin ID ${created.admin_id} (${created.email})`,
+    );
   }
 
   console.log(`Admin account ready: ${email}`);

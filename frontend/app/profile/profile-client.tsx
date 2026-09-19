@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -21,7 +20,6 @@ import {
   LogOut,
   Loader2,
   ShieldCheck,
-  Home,
 } from "lucide-react";
 
 interface ProfileUser {
@@ -48,18 +46,21 @@ interface ProfileClientProps {
 
 export default function ProfileClient({ user }: ProfileClientProps) {
   const router = useRouter();
+  const [logoutError, setLogoutError] = React.useState("");
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
   const handleSignOut = async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
+    setLogoutError("");
 
     try {
-      await authClient.signOut();
+      const { error } = await authClient.signOut();
+      if (error) throw new Error("Không thể đăng xuất. Vui lòng thử lại.");
       router.push("/dang-nhap");
       router.refresh();
     } catch (err) {
-      console.error("Sign out error:", err);
+      setLogoutError(err instanceof Error ? err.message : "Không thể đăng xuất. Vui lòng thử lại.");
       setIsLoggingOut(false);
     }
   };
@@ -82,51 +83,16 @@ export default function ProfileClient({ user }: ProfileClientProps) {
     : "S2S";
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-mono text-sm">
-              S2S
-            </div>
-            <span>S2S</span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/">
-                <Home className="h-4 w-4 mr-1.5" />
-                Trang chủ
-              </Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSignOut}
-              disabled={isLoggingOut}
-              className="text-destructive border-destructive/30 hover:bg-destructive/10"
-            >
-              {isLoggingOut ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
-              ) : (
-                <LogOut className="h-4 w-4 mr-1.5" />
-              )}
-              Đăng xuất
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main content */}
+    <div className="min-h-[calc(100svh-4rem)] bg-background text-foreground flex flex-col">
       <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-8 space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Hồ sơ cá nhân</h1>
           <p className="text-muted-foreground mt-1">
-            Thông tin tài khoản đã được xác thực an toàn trên hệ thống S2S
+            Thông tin tài khoản của bạn trên hệ thống S2S
           </p>
         </div>
 
+        {logoutError && <p role="alert" className="text-sm text-destructive">{logoutError}</p>}
         <div className="grid gap-6 md:grid-cols-3">
           {/* Avatar Card */}
           <Card className="md:col-span-1 shadow-sm border-border flex flex-col items-center text-center p-6 justify-center">
@@ -145,7 +111,7 @@ export default function ProfileClient({ user }: ProfileClientProps) {
                 </div>
               )}
               <span className="absolute bottom-0 right-0 h-5 w-5 rounded-full bg-primary border-2 border-background flex items-center justify-center text-[10px] text-primary-foreground font-bold">
-                ✓
+                {user.emailVerified ? "✓" : "!"}
               </span>
             </div>
 
@@ -154,7 +120,7 @@ export default function ProfileClient({ user }: ProfileClientProps) {
 
             <div className="mt-4 w-full pt-4 border-t border-border flex items-center justify-center gap-1.5 text-xs text-primary font-medium">
               <ShieldCheck className="h-4 w-4" />
-              Tài khoản đã xác thực
+              {user.emailVerified ? "Email đã xác minh" : "Email chưa xác minh"}
             </div>
           </Card>
 

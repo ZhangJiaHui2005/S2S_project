@@ -14,7 +14,7 @@ type AuthCardProps = {
 
 export function AuthCard({ title, description, children, footerText, footerLink, footerLabel }: AuthCardProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
+    <main className="flex min-h-[calc(100svh-4rem)] items-center justify-center bg-muted/40 px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Link aria-label="Về trang chủ" className="mx-auto mb-3 flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground" href="/">

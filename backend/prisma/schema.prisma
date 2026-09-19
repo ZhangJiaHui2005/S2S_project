@@ -8,25 +8,26 @@ datasource db {
 }
 
 model BetterAuthUser {
-  id            String    @id
+  id            String              @id
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String              @unique
+  emailVerified Boolean             @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
   sessions      BetterAuthSession[]
   accounts      BetterAuthAccount[]
+  businessUser  User?
 
   @@map("user")
 }
 
 model BetterAuthSession {
-  id        String   @id
+  id        String         @id
   expiresAt DateTime
-  token     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  token     String         @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
   ipAddress String?
   userAgent String?
   userId    String
@@ -37,7 +38,7 @@ model BetterAuthSession {
 }
 
 model BetterAuthAccount {
-  id                    String    @id
+  id                    String         @id
   accountId             String
   providerId            String
   userId                String
@@ -49,8 +50,8 @@ model BetterAuthAccount {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   @@index([userId])
   @@map("account")
@@ -68,14 +69,36 @@ model BetterAuthVerification {
   @@map("verification")
 }
 
+model AdminSession {
+  token_hash String   @id
+  admin_id   Int
+  version    Int
+  expires_at DateTime
+  created_at DateTime @default(now())
+  admin      Admin    @relation(fields: [admin_id], references: [admin_id], onDelete: Cascade)
+
+  @@index([admin_id])
+  @@index([expires_at])
+}
+
+model AdminLoginAttempt {
+  key        String   @id
+  count      Int
+  expires_at DateTime
+
+  @@index([expires_at])
+}
+
 model Admin {
-  admin_id      Int       @id @default(autoincrement())
-  email         String    @unique
-  password_hash String
-  full_name     String
-  last_login_at DateTime?
-  created_at    DateTime  @default(now())
-  updated_at    DateTime
+  admin_id        Int            @id @default(autoincrement())
+  email           String         @unique
+  password_hash   String
+  session_version Int            @default(0)
+  sessions        AdminSession[]
+  full_name       String
+  last_login_at   DateTime?
+  created_at      DateTime       @default(now())
+  updated_at      DateTime
 }
 
 model AdminNotification {
@@ -225,6 +248,8 @@ model Transaction {
 }
 
 model User {
+  auth_user_id                              String?         @unique
+  auth_user                                 BetterAuthUser? @relation(fields: [auth_user_id], references: [id], onDelete: SetNull)
   user_id                                   Int             @id @default(autoincrement())
   email                                     String          @unique
   password_hash                             String?

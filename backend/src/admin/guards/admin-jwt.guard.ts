@@ -4,58 +4,69 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { parseCookie } from 'cookie';
 import jwt from 'jsonwebtoken';
+import { prisma } from '../../prisma.js';
+import { extractAdminToken, hashAdminToken } from '../admin-token.js';
 
 export interface AdminJwtPayload {
   adminId: number;
   email: string;
   fullName: string;
   role: 'admin';
+  version: number;
   iat?: number;
   exp?: number;
 }
 
 @Injectable()
 export class AdminJwtGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const token = this.extractToken(request);
-
-    if (!token) {
-      throw new UnauthorizedException('Chưa đăng nhập quyền quản trị (Admin).');
-    }
-
+    const token = extractAdminToken(request);
+    const invalid = () =>
+      new UnauthorizedException(
+        'Phiên đăng nhập quản trị không hợp lệ hoặc đã hết hạn.',
+      );
+    if (!token) throw invalid();
     const secret = process.env.JWT_SECRET?.trim();
-    if (!secret) {
-      throw new Error('JWT_SECRET chưa được cấu hình.');
-    }
+    if (!secret) throw new Error('JWT_SECRET chưa được cấu hình.');
 
+    let decoded: jwt.JwtPayload;
     try {
-      const decoded = jwt.verify(token, secret) as AdminJwtPayload;
-      request.admin = decoded;
-      return true;
+      const payload = jwt.verify(token, secret, { algorithms: ['HS256'] });
+      if (typeof payload === 'string') throw invalid();
+      decoded = payload;
     } catch {
-      throw new UnauthorizedException('Phiên đăng nhập quản trị không hợp lệ hoặc đã hết hạn.');
+      throw invalid();
     }
-  }
+    if (
+      decoded.role !== 'admin' ||
+      !Number.isInteger(decoded.adminId) ||
+      !Number.isInteger(decoded.version) ||
+      typeof decoded.exp !== 'number'
+    )
+      throw invalid();
 
-  private extractToken(request: any): string | null {
-    // 1. Check Authorization Bearer Header
-    const authHeader = request.headers?.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      return authHeader.substring(7);
-    }
+    const session = await prisma.adminSession.findUnique({
+      where: { token_hash: hashAdminToken(token) },
+      include: { admin: true },
+    });
+    if (
+      !session ||
+      session.expires_at <= new Date() ||
+      session.admin_id !== decoded.adminId ||
+      session.version !== decoded.version ||
+      session.admin.session_version !== decoded.version
+    )
+      throw invalid();
 
-    // 2. Check Cookie Header
-    const cookieHeader = request.headers?.cookie;
-    if (cookieHeader) {
-      const parsed = parseCookie(cookieHeader);
-      if (parsed.s2s_admin_token) {
-        return parsed.s2s_admin_token;
-      }
-    }
-
-    return null;
+    request.admin = {
+      adminId: session.admin_id,
+      email: session.admin.email,
+      fullName: session.admin.full_name,
+      role: 'admin',
+      version: session.version,
+    } satisfies AdminJwtPayload;
+    return true;
   }
 }

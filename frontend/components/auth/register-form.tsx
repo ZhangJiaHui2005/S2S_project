@@ -27,9 +27,9 @@ export function RegisterForm() {
     const confirmPassword = String(form.get("confirmPassword") ?? "");
     const nextErrors: FieldErrors = {};
 
-    if (name.length < 2) nextErrors.name = "Họ tên phải có ít nhất 2 ký tự.";
+    if (name.length < 2 || name.length > 100) nextErrors.name = "Họ tên phải có từ 2 đến 100 ký tự.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = "Vui lòng nhập địa chỉ email hợp lệ.";
-    if (password.length < 8) nextErrors.password = "Mật khẩu phải có ít nhất 8 ký tự.";
+    if (password.length < 8 || password.length > 128) nextErrors.password = "Mật khẩu phải có từ 8 đến 128 ký tự.";
     if (confirmPassword !== password) nextErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
 
     setFieldErrors(nextErrors);

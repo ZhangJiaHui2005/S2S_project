@@ -1,3 +1,9 @@
+import { randomUUID } from 'node:crypto';
+import { hashAdminToken } from './admin-token.js';
+import {
+  normalizeAdminEmail,
+  validateAdminPassword,
+} from './admin-validation.js';
 import {
   Injectable,
   NotFoundException,
@@ -18,40 +24,66 @@ export class AdminService {
     return secret;
   }
 
-  async login(emailInput: string, passwordInput: string) {
-    const email = emailInput.trim().toLowerCase();
+  async login(emailInput: unknown, passwordInput: unknown) {
+    const email = normalizeAdminEmail(emailInput);
+    const password = validateAdminPassword(passwordInput);
     const admin = await prisma.admin.findUnique({
       where: { email },
     });
 
     if (!admin) {
-      throw new UnauthorizedException('Email quản trị hoặc mật khẩu không chính xác.');
+      throw new UnauthorizedException(
+        'Email quản trị hoặc mật khẩu không chính xác.',
+      );
     }
 
-    const isMatch = await bcrypt.compare(passwordInput, admin.password_hash);
+    const isMatch = await bcrypt.compare(password, admin.password_hash);
     if (!isMatch) {
-      throw new UnauthorizedException('Email quản trị hoặc mật khẩu không chính xác.');
+      throw new UnauthorizedException(
+        'Email quản trị hoặc mật khẩu không chính xác.',
+      );
     }
 
     // Update last_login_at
     const now = new Date();
-    await prisma.admin.update({
-      where: { admin_id: admin.admin_id },
-      data: {
-        last_login_at: now,
-        updated_at: now,
-      },
-    });
-
     const payload: AdminJwtPayload = {
       adminId: admin.admin_id,
       email: admin.email,
       fullName: admin.full_name,
       role: 'admin',
+      version: admin.session_version,
     };
 
     const token = jwt.sign(payload, this.jwtSecret, {
       expiresIn: '7d',
+      algorithm: 'HS256',
+      jwtid: randomUUID(),
+    });
+
+    await prisma.$transaction(async (tx) => {
+      const result = await tx.admin.updateMany({
+        where: {
+          admin_id: admin.admin_id,
+          password_hash: admin.password_hash,
+          session_version: admin.session_version,
+        },
+        data: { last_login_at: now, updated_at: now },
+      });
+      if (!result.count)
+        throw new UnauthorizedException(
+          'Mật khẩu vừa thay đổi. Vui lòng đăng nhập lại.',
+        );
+      await tx.adminSession.deleteMany({
+        where: { admin_id: admin.admin_id, expires_at: { lte: now } },
+      });
+      await tx.adminSession.create({
+        data: {
+          token_hash: hashAdminToken(token),
+          admin_id: admin.admin_id,
+          version: admin.session_version,
+          expires_at: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
     });
 
     return {
@@ -93,24 +125,42 @@ export class AdminService {
     };
   }
 
-  async setPassword(emailInput: string, newPassword: string) {
-    const email = emailInput.trim().toLowerCase();
+  async logout(token: string | null) {
+    if (token)
+      await prisma.adminSession.deleteMany({
+        where: { token_hash: hashAdminToken(token) },
+      });
+  }
+
+  async setPassword(emailInput: unknown, passwordInput: unknown) {
+    const email = normalizeAdminEmail(emailInput);
+    const newPassword = validateAdminPassword(passwordInput, true);
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(newPassword, salt);
     const now = new Date();
 
-    const admin = await prisma.admin.update({
-      where: { email },
-      data: {
-        password_hash,
-        updated_at: now,
-      },
-      select: {
-        admin_id: true,
-        email: true,
-        full_name: true,
-        updated_at: true,
-      },
+    const admin = await prisma.$transaction(async (tx) => {
+      const existing = await tx.admin.findUnique({ where: { email } });
+      if (!existing)
+        throw new NotFoundException('Không tìm thấy tài khoản quản trị viên.');
+      const updated = await tx.admin.update({
+        where: { email },
+        data: {
+          password_hash,
+          updated_at: now,
+          session_version: { increment: 1 },
+        },
+        select: {
+          admin_id: true,
+          email: true,
+          full_name: true,
+          updated_at: true,
+        },
+      });
+      await tx.adminSession.deleteMany({
+        where: { admin_id: updated.admin_id },
+      });
+      return updated;
     });
 
     return admin;
