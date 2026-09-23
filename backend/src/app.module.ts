@@ -6,6 +6,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { auth } from './auth.js';
 import { CategoryModule } from './category/category.module.js';
+import { ItemModule } from './item/item.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -21,6 +22,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       serviceId: 'backend',
     }),
     CategoryModule,
+    ItemModule,
   ],
   controllers: [AppController],
   providers: [AppService],

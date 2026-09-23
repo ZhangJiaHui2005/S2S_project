@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 
 const navigation = [
+  { label: "Duyệt vật phẩm", href: "/items" },
   { label: "Giới thiệu", href: "/#gioi-thieu" },
   { label: "Cách hoạt động", href: "/#cach-hoat-dong" },
   { label: "An toàn", href: "/#an-toan" },

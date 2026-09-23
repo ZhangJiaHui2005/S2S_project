@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
           source: "/api/categories/:path*",
           destination: `${authServerUrl}/api/categories/:path*`,
         },
+        {
+          source: "/api/items/:path*",
+          destination: `${authServerUrl}/api/items/:path*`,
+        },
       ],
     };
   },

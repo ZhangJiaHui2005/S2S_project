@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -12,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   User as UserIcon,
   Mail,
@@ -91,6 +92,25 @@ export default function ProfileClient({ user }: ProfileClientProps) {
             Thông tin tài khoản của bạn trên hệ thống S2S
           </p>
         </div>
+
+        <Card className="shadow-none border-primary/20 bg-primary/5 p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-base">Quản lý vật phẩm chia sẻ</h3>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Đăng bài mới để bán/cho mượn đồ dùng hoặc quản lý danh sách bài viết của bạn.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Link href="/dang-bai" className={buttonVariants({ variant: "default", size: "sm" })}>
+                Đăng vật phẩm mới
+              </Link>
+              <Link href="/profile/bai-dang" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                Bài đăng của tôi
+              </Link>
+            </div>
+          </div>
+        </Card>
 
         {logoutError && <p role="alert" className="text-sm text-destructive">{logoutError}</p>}
         <div className="grid gap-6 md:grid-cols-3">
