@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, PackageCheck, ArrowLeftRight, KeyRound, ExternalLink, Shield } from "lucide-react";
+import { LayoutDashboard, Users, PackageCheck, ArrowLeftRight, KeyRound, ExternalLink, Shield, Tags } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
   SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
@@ -13,6 +13,7 @@ const navigationItems = [
   { title: "Tổng quan", href: "/admin", icon: LayoutDashboard },
   { title: "Quản lý người dùng", href: "/admin/users", icon: Users },
   { title: "Kiểm duyệt vật phẩm", href: "/admin/items", icon: PackageCheck },
+  { title: "Quản lý danh mục", href: "/admin/categories", icon: Tags },
   { title: "Giao dịch Escrow & QR", href: "/admin/transactions", icon: ArrowLeftRight },
   { title: "Đổi mật khẩu / Bảo mật", href: "/admin#password-section", icon: KeyRound },
 ];

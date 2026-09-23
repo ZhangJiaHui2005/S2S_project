@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     const authServerUrl = process.env.AUTH_SERVER_URL ?? "http://localhost:3001";
 
     return {
-      // Better Auth and Admin API are hosted by NestJS. Run this before filesystem routes so
+      // Better Auth and application APIs are hosted by NestJS. Run this before filesystem routes so
       // the browser always talks to one canonical server.
       beforeFiles: [
         {
@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
         {
           source: "/api/admin/:path*",
           destination: `${authServerUrl}/api/admin/:path*`,
+        },
+        {
+          source: "/api/categories/:path*",
+          destination: `${authServerUrl}/api/categories/:path*`,
         },
       ],
     };
